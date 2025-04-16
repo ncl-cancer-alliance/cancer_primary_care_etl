@@ -108,8 +108,8 @@ def upload_data(engine, data, table, schema, id_cols=["Start_Date"]):
         else:
             line += "AND "
 
-        if col == "Start_Date":
-            line += f"[Start_Date] = '{date_str}' "
+        if "Date" in col:
+            line += f"[{col}] = '{date_str}' "
         else:
             #Get data from df
             unique_vals = list(data[col].unique())
@@ -139,6 +139,34 @@ def ccr_processing(df, parameters):
     date_string = date_data_start.strftime("%b %y")
 
     df["Indicator"] = parameters + " - " + date_string
+
+    return df
+
+#Parameters = None
+def fit_processing(df, parameters):
+
+    df["Date_Type"] = "Monthly"
+
+    return df
+
+def spr_processing(df, parameters):
+    #Add Indicator Name to data
+    df["Indicator_Name"] = parameters
+
+    #Rename columns to match the Pop Health table schematics
+    rename_map = {
+        "Organisation":"Area_Name",
+        "CDB":"Area_Code",
+        "Population_Count":"Value",
+        "Parent":"Denominator",
+        "Start_Date":"Time_period_Sortable",
+        "End_Date":"Date_updated"
+    }
+    df.rename(columns=rename_map)
+
+    unused_cols = ["Percentage", "Males", "Females", "Excluded", "Status"]
+
+    df.drop(labels=unused_cols, axis=1, inplace=True)
 
     return df
 
@@ -174,6 +202,13 @@ def process_emis_datafile(data_file, ds,
     df["Start_Date"] = date_data_start
     df["End_Date"] = date_data_end
 
+    #Remove whitespace in column names
+    df.columns = df.columns.str.replace('\n', ' ', regex=False)
+    df.columns = df.columns.str.strip().str.replace(' ', '_')
+
+    #Remove the Total row from the data
+    df = df[df["Organisation"] != "Total"]
+
     #Apply dataset specific processing (if any)
     if custom_processing:
         df = custom_processing(df, custom_parameters)
@@ -182,7 +217,7 @@ def process_emis_datafile(data_file, ds,
     engine = db.db_connect(settings["db_dsn"], settings["db_database"])
     upload_data(engine, df, 
                 settings["ds"][ds]["db_dest_table"], settings["db_dest_schema"],
-                id_cols=["Start_Date", "Indicator"])
+                id_cols=settings["ds"][ds]["id_cols"])
 
     return df
 
@@ -232,7 +267,43 @@ def emis_esafety(settings, parent_dir):
                                       custom_processing=ccr_processing,
                                       custom_parameters=indicator_name)   
 
-#USC referrals safety netted via e-safety netting tool
+#Function to process the FIT data
+def emis_fit(settings, parent_dir):
+    #Find e-safety netting directory
+    data_dir = find_data_subdir(parent_dir, substrings=["FIT"], 
+                                name="FIT")
+
+    #If the directory was found
+    if data_dir:
+        #Handle each file indivdually
+        data_files = os.listdir(parent_dir + data_dir)
+        
+        for data_file in data_files:
+            #Check if this data_file is one we want to process
+            if "before Ref" in data_file:
+                full_path = parent_dir + data_dir + "/" + data_file
+
+                process_emis_datafile(full_path, ds="FIT", 
+                                      custom_processing=fit_processing)   
+
+def emis_spr(settings, parent_dir):
+    #Find e-safety netting directory
+    data_dir = find_data_subdir(parent_dir, substrings=["social", "prescrib"], 
+                                name="Social Prescribing Referral")
+
+    #If the directory was found
+    if data_dir:
+        #Handle each file indivdually
+        data_files = os.listdir(parent_dir + data_dir)
+        
+        for data_file in data_files:
+            #Check if this data_file is one we want to process
+            if "Social" in data_file:
+                full_path = parent_dir + data_dir + "/" + data_file
+
+                process_emis_datafile(full_path, ds="SPR", 
+                                      custom_processing=spr_processing,
+                                      custom_parameters=settings["ds"]["SPR"]["indicator_name"])
 
 def emis_manager(settings, zip=True):
 
@@ -243,8 +314,17 @@ def emis_manager(settings, zip=True):
         data_dir = "./data/emis/"
 
     #Run the EMIS pipelines
+    print("CCR Pipeline")
     emis_cancer(settings, data_dir)
+
+    print("eSafety Pipeline")
     emis_esafety(settings, data_dir)
+
+    print("FIT Pipeline")
+    emis_fit(settings, data_dir)
+
+    print("SPR Pipeline")
+    emis_spr(settings, data_dir)
 
     #Clean up directory
     if zip:
@@ -267,7 +347,13 @@ settings = {
          "005":"CAN005 - Cancer support offered within 3 months"},
     "ds":{
         "CCR":{"db_dest_table":"Monthly_CCR_Safety_Netting_Test",
-               "esafety_indicator_name":"USC referrals safety netted via e-safety netting tool"}
+               "esafety_indicator_name":"USC referrals safety netted via e-safety netting tool",
+               "id_cols": ["Start_Date", "Indicator"]},
+        "FIT":{"db_dest_table":"Monthly_FIT_NCL_Test",
+               "id_cols": ["Start_Date", "Date_Type"]},
+        "SPR":{"db_dest_table":"Monthly_Population_Health_Test",
+               "indicator_name":"No. of Social Prescribing referrals made within the last 12 months",
+               "id_cols": ["Date_updated", "Indicator_Name"]}
     }
 }
 emis_manager(settings)
