@@ -3,7 +3,7 @@ import csv
 import os
 import pandas as pd
 
-from datetime import datetime
+from datetime import date, datetime
 
 #Util Modules
 import database_util as db
@@ -91,11 +91,6 @@ def get_emis_table_start(data_file, keyword="Organisation"):
 ## Replace if I can make the destination tables more generic
 def upload_data(engine, data, table, schema, id_cols=["Start_Date"]):
 
-    #Delete existing data
-    global date_data_start
-
-    date_str = date_data_start.strftime("%Y-%m-%d")
-
     #Build overlapping data maintenance query
     ##Phase out in future versions
     query_base = f"DELETE FROM [{schema}].[{table}] " 
@@ -108,15 +103,17 @@ def upload_data(engine, data, table, schema, id_cols=["Start_Date"]):
         else:
             line += "AND "
 
-        if "Date" in col:
-            line += f"[{col}] = '{date_str}' "
+        #Get data from df
+        unique_vals = list(data[col].unique())
+
+        #Check if this is a date column and convert to string
+        if isinstance(unique_vals[0], date):
+            unique_vals = [x.strftime("%Y-%m-%d") for x in unique_vals]
+
+        if len(unique_vals) == 1:
+            line += f"[{col}] = '{unique_vals[0]}' "
         else:
-            #Get data from df
-            unique_vals = list(data[col].unique())
-            if len(unique_vals) == 1:
-                line += f"[{col}] = '{unique_vals[0]}'"
-            else:
-                line += f"[{col}] IN '{', '.join(unique_vals)}'"
+            line += f"[{col}] IN '{', '.join(unique_vals)}' "
 
     query = query_base + line 
 
@@ -126,11 +123,11 @@ def upload_data(engine, data, table, schema, id_cols=["Start_Date"]):
     data.to_sql(name=table, con=engine, schema=schema,
                 if_exists="append", index=False, chunksize=100, method="multi")
 
-
 #Custom Dataset Processing Functions
+#These are data manipulation that is specific to the datasets
 ####################################
 
-#Parametes = indicator_name
+#Parametes = Indicator Name
 def ccr_processing(df, parameters):
 
     global date_data_start
@@ -149,6 +146,7 @@ def fit_processing(df, parameters):
 
     return df
 
+#Parameters = Indicator Name
 def spr_processing(df, parameters):
     #Add Indicator Name to data
     df["Indicator_Name"] = parameters
@@ -169,6 +167,50 @@ def spr_processing(df, parameters):
     df.drop(labels=unused_cols, axis=1, inplace=True)
 
     return df
+
+####################################
+
+#Custom File Identifiers
+####################################
+def file_id_ccr(settings, ds, data_files):
+    target_files = []
+
+    base_prefix = settings["ds"][ds]["metric_id_prefix"]
+    metrics_ids = settings["ds"][ds]["metric_ids"]
+    target_metrics =  [base_prefix + x for x in metrics_ids]
+
+    for data_file in data_files:
+        if data_file[0:6] in target_metrics:
+            target_files.append(data_file)
+
+    return target_files
+
+def file_id_esafety(settings, ds, data_files):
+    return [x for x in data_files if "esafety" in x]
+
+def file_id_fit(settings, ds, data_files):
+    return [x for x in data_files if "before Ref" in x]
+
+def file_id_spr(settings, ds, data_files):
+    return [x for x in data_files if "Social" in x]
+####################################
+
+#Load Custom Parameters
+####################################
+def custom_parameters_ccr(settings, ds, data_file):
+    #Load metric id information
+    metric_id_map = settings["ds"][ds]["metric_id_map"]
+
+    #Get indicator name using the file id and the metric id map
+    indicator_name = metric_id_map[data_file[3:6]]
+
+    return indicator_name
+
+def custom_parameters_esafety(settings, ds, data_file):
+    return settings["ds"][ds]["esafety_indicator_name"]
+
+def custom_parameters_spr(settings, ds, data_file):
+    return settings["ds"]["SPR"]["indicator_name"]
 
 ####################################
 
@@ -221,91 +263,44 @@ def process_emis_datafile(data_file, ds,
 
     return df
 
-#Function to process the Cancer Care Review files
-def emis_cancer(settings, parent_dir, file_ids=["004", "005"]):
-    #Find Cancer Care Review directory
-    data_dir = find_data_subdir(parent_dir, substrings=["Cancer"], name="Cancer Care Review")
-
-    #If the directory was found
-    if data_dir:
-        #Handle each file indivdually
-        base_prefix = "CAN"
-        data_files = os.listdir(parent_dir + data_dir)
-        
-        for data_file in data_files:
-            #Check if this data_file is one we want to process
-            if data_file[0:3] == base_prefix and data_file[3:6] in file_ids:
-                full_path = parent_dir + data_dir + "/" + data_file
-
-                #Get indicator name from settings
-                indicator_name = settings["ccr_map_id"][data_file[3:6]]
-
-                process_emis_datafile(full_path, "CCR",
-                                      custom_processing=ccr_processing,
-                                      custom_parameters=indicator_name)          
-
-#Function to process the e-Safety Netting files
-def emis_esafety(settings, parent_dir):
-    #Find e-safety netting directory
-    data_dir = find_data_subdir(parent_dir, substrings=["netting"], 
-                                name="e-Safety Netting")
+#Function to manage which files to process
+def emis_file_manager(settings, parent_dir, ds, 
+                func_file_id=False, 
+                func_custom=False, func_custom_params=False):
+    
+    #Find the dataset subdirectory
+    ds_name = settings["ds"][ds]["name"]
+    subdir_str_ids = settings["ds"][ds]["subdir_substrings"]
+    data_dir = find_data_subdir(parent_dir, 
+                                substrings=subdir_str_ids, name=ds_name)
 
     #If the directory was found
     if data_dir:
         #Handle each file indivdually
         data_files = os.listdir(parent_dir + data_dir)
+
+        #Determine which files in the directory should be processed
+        if func_file_id:
+            target_files = func_file_id(settings, ds, data_files)
+        else:
+            target_files = data_files
         
-        for data_file in data_files:
-            #Check if this data_file is one we want to process
-            if "esafety" in data_file:
-                full_path = parent_dir + data_dir + "/" + data_file
+        #Process each file iteratively
+        for data_file in target_files:
+            full_path = parent_dir + data_dir + "/" + data_file
 
-                #Get indicator name from settings
-                indicator_name = settings["ds"]["CCR"]["esafety_indicator_name"]
+            #Get dataset custom parameters
+            if func_custom_params:
+                custom_parameters = func_custom_params(settings, ds, data_file)
+            else:
+                custom_parameters = False
 
-                process_emis_datafile(full_path, ds="CCR", 
-                                      custom_processing=ccr_processing,
-                                      custom_parameters=indicator_name)   
+            process_emis_datafile(full_path, ds,
+                                    custom_processing=func_custom,
+                                    custom_parameters=custom_parameters)          
 
-#Function to process the FIT data
-def emis_fit(settings, parent_dir):
-    #Find e-safety netting directory
-    data_dir = find_data_subdir(parent_dir, substrings=["FIT"], 
-                                name="FIT")
-
-    #If the directory was found
-    if data_dir:
-        #Handle each file indivdually
-        data_files = os.listdir(parent_dir + data_dir)
-        
-        for data_file in data_files:
-            #Check if this data_file is one we want to process
-            if "before Ref" in data_file:
-                full_path = parent_dir + data_dir + "/" + data_file
-
-                process_emis_datafile(full_path, ds="FIT", 
-                                      custom_processing=fit_processing)   
-
-def emis_spr(settings, parent_dir):
-    #Find e-safety netting directory
-    data_dir = find_data_subdir(parent_dir, substrings=["social", "prescrib"], 
-                                name="Social Prescribing Referral")
-
-    #If the directory was found
-    if data_dir:
-        #Handle each file indivdually
-        data_files = os.listdir(parent_dir + data_dir)
-        
-        for data_file in data_files:
-            #Check if this data_file is one we want to process
-            if "Social" in data_file:
-                full_path = parent_dir + data_dir + "/" + data_file
-
-                process_emis_datafile(full_path, ds="SPR", 
-                                      custom_processing=spr_processing,
-                                      custom_parameters=settings["ds"]["SPR"]["indicator_name"])
-
-def emis_manager(settings, zip=True):
+#Parent function to handle all pipelines and data loading
+def emis_dataset_manager(settings, zip=True):
 
     #Extract the data
     if zip:
@@ -318,18 +313,23 @@ def emis_manager(settings, zip=True):
 
     if settings["ds"]["CCR"]["run"]:
         print("-> CCR Pipeline")
-        emis_cancer(settings, data_dir)
+        emis_file_manager(settings, data_dir, "CCR", 
+                    file_id_ccr, ccr_processing, custom_parameters_ccr)
 
+    if settings["ds"]["eSafety"]["run"]:
         print("-> eSafety Pipeline")
-        emis_esafety(settings, data_dir)
+        emis_file_manager(settings, data_dir, "eSafety", 
+                    file_id_esafety, ccr_processing, custom_parameters_esafety)
 
     if settings["ds"]["FIT"]["run"]:
         print("-> FIT Pipeline")
-        emis_fit(settings, data_dir)
+        emis_file_manager(settings, data_dir, "FIT", 
+                    file_id_fit, fit_processing)
 
     if settings["ds"]["SPR"]["run"]:
         print("-> SPR Pipeline")
-        emis_spr(settings, data_dir)
+        emis_file_manager(settings, data_dir, "SPR", 
+                    file_id_spr, spr_processing, custom_parameters_spr)
 
     #Clean up directory
     if zip:
@@ -346,21 +346,35 @@ settings = {
     "db_dsn": "SANDPIT",
     "db_database": "Data_Lab_NCL_Dev",
     "db_dest_schema": "GrahamR",
-    "ccr_map_id":
-        {"004":"Cancer Care Review within 12 months",
-         "005":"CAN005 - Cancer support offered within 3 months"},
     "ds":{
-        "CCR":{"run":True,
+        "CCR":{"run":False,
+               "name":"Cancer Care Reviews",
+               "subdir_substrings":["Cancer"],
                "db_dest_table":"Monthly_CCR_Safety_Netting_Test",
-               "esafety_indicator_name":"USC referrals safety netted via e-safety netting tool",
+               "metric_id_prefix": "CAN",
+               "metric_ids": ["004", "005"],
+               "metric_id_map":{
+                   "004":"CAN004 - Cancer Care Review within 12 months",
+                   "005":"CAN005 - Cancer support offered within 3 months"},
                "id_cols": ["Start_Date", "Indicator"]},
-        "FIT":{"run":True,
+        "eSafety":{
+            "run":False,
+            "name":"e-Safety Netting",
+            "subdir_substrings":["netting"],
+            "db_dest_table":"Monthly_CCR_Safety_Netting_Test",
+            "esafety_indicator_name":"USC referrals safety netted via e-safety netting tool",
+            "id_cols": ["Start_Date", "Indicator"]},
+        "FIT":{"run":False,
+               "name":"FIT",
+               "subdir_substrings":["FIT"],
                "db_dest_table":"Monthly_FIT_NCL_Test",
                "id_cols": ["Start_Date", "Date_Type"]},
         "SPR":{"run":True,
+               "name":"Social Prescribing Referrals",
+               "subdir_substrings":["social", "prescrib"],
                "db_dest_table":"Monthly_Population_Health_Test",
                "indicator_name":"No. of Social Prescribing referrals made within the last 12 months",
                "id_cols": ["Date_updated", "Indicator_Name"]}
     }
 }
-emis_manager(settings)
+emis_dataset_manager(settings)
