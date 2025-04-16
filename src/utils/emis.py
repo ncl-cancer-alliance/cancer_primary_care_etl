@@ -128,7 +128,7 @@ def upload_data(engine, data, table, schema, id_cols=["Start_Date"]):
 ####################################
 
 #Parametes = Indicator Name
-def ccr_processing(df, parameters):
+def processing_ccr(df, parameters):
 
     global date_data_start
 
@@ -140,14 +140,14 @@ def ccr_processing(df, parameters):
     return df
 
 #Parameters = None
-def fit_processing(df, parameters):
+def processing_fit(df, parameters):
 
     df["Date_Type"] = "Monthly"
 
     return df
 
 #Parameters = Indicator Name
-def spr_processing(df, parameters):
+def processing_spr(df, parameters):
     #Add Indicator Name to data
     df["Indicator_Name"] = parameters
 
@@ -266,7 +266,7 @@ def process_emis_datafile(data_file, ds,
 #Function to manage which files to process
 def emis_file_manager(settings, parent_dir, ds, 
                 func_file_id=False, 
-                func_custom=False, func_custom_params=False):
+                func_custom_processing=False, func_custom_params=False):
     
     #Find the dataset subdirectory
     ds_name = settings["ds"][ds]["name"]
@@ -296,7 +296,7 @@ def emis_file_manager(settings, parent_dir, ds,
                 custom_parameters = False
 
             process_emis_datafile(full_path, ds,
-                                    custom_processing=func_custom,
+                                    custom_processing=func_custom_processing,
                                     custom_parameters=custom_parameters)          
 
 #Parent function to handle all pipelines and data loading
@@ -308,28 +308,28 @@ def emis_dataset_manager(settings, zip=True):
     else:
         data_dir = "./data/emis/"
 
+    pipelines = settings["emis_pipelines"]
+
+    runtime_pipelines = [x for x in pipelines if settings["ds"][x]["run"]]
+
     #Run the EMIS pipelines
-    print("Running the EMIS Pipeline:")
+    if runtime_pipelines:
+        print("Running the EMIS Pipeline:")
 
-    if settings["ds"]["CCR"]["run"]:
-        print("-> CCR Pipeline")
-        emis_file_manager(settings, data_dir, "CCR", 
-                    file_id_ccr, ccr_processing, custom_parameters_ccr)
+    for ds in runtime_pipelines:
+        print(f"-> {ds} Pipeline")
 
-    if settings["ds"]["eSafety"]["run"]:
-        print("-> eSafety Pipeline")
-        emis_file_manager(settings, data_dir, "eSafety", 
-                    file_id_esafety, ccr_processing, custom_parameters_esafety)
+        #Custom processing functions
+        custom_funcs = settings["ds"][ds]["func"]
 
-    if settings["ds"]["FIT"]["run"]:
-        print("-> FIT Pipeline")
-        emis_file_manager(settings, data_dir, "FIT", 
-                    file_id_fit, fit_processing)
-
-    if settings["ds"]["SPR"]["run"]:
-        print("-> SPR Pipeline")
-        emis_file_manager(settings, data_dir, "SPR", 
-                    file_id_spr, spr_processing, custom_parameters_spr)
+        emis_file_manager(
+            settings,
+            data_dir,
+            ds,
+            func_file_id=custom_funcs["file_id"],
+            func_custom_processing=custom_funcs["custom_processing"],
+            func_custom_params=custom_funcs["custom_parameters"]
+        )
 
     #Clean up directory
     if zip:
@@ -346,8 +346,9 @@ settings = {
     "db_dsn": "SANDPIT",
     "db_database": "Data_Lab_NCL_Dev",
     "db_dest_schema": "GrahamR",
+    "emis_pipelines": ["CCR", "eSafety", "FIT", "SPR"],
     "ds":{
-        "CCR":{"run":False,
+        "CCR":{"run":True,
                "name":"Cancer Care Reviews",
                "subdir_substrings":["Cancer"],
                "db_dest_table":"Monthly_CCR_Safety_Netting_Test",
@@ -356,25 +357,49 @@ settings = {
                "metric_id_map":{
                    "004":"CAN004 - Cancer Care Review within 12 months",
                    "005":"CAN005 - Cancer support offered within 3 months"},
-               "id_cols": ["Start_Date", "Indicator"]},
+               "id_cols": ["Start_Date", "Indicator"],
+               "func":{
+                   "file_id": file_id_ccr,
+                   "custom_processing": processing_ccr,
+                   "custom_parameters": custom_parameters_ccr
+               }
+        },
         "eSafety":{
-            "run":False,
+            "run":True,
             "name":"e-Safety Netting",
             "subdir_substrings":["netting"],
             "db_dest_table":"Monthly_CCR_Safety_Netting_Test",
             "esafety_indicator_name":"USC referrals safety netted via e-safety netting tool",
-            "id_cols": ["Start_Date", "Indicator"]},
-        "FIT":{"run":False,
+            "id_cols": ["Start_Date", "Indicator"],
+            "func":{
+                   "file_id": file_id_esafety,
+                   "custom_processing": processing_ccr,
+                   "custom_parameters": custom_parameters_esafety
+               }
+        },
+        "FIT":{"run":True,
                "name":"FIT",
                "subdir_substrings":["FIT"],
                "db_dest_table":"Monthly_FIT_NCL_Test",
-               "id_cols": ["Start_Date", "Date_Type"]},
+               "id_cols": ["Start_Date", "Date_Type"],
+               "func":{
+                   "file_id": file_id_fit,
+                   "custom_processing": processing_fit,
+                   "custom_parameters": False
+                   }
+        },
         "SPR":{"run":True,
                "name":"Social Prescribing Referrals",
                "subdir_substrings":["social", "prescrib"],
                "db_dest_table":"Monthly_Population_Health_Test",
                "indicator_name":"No. of Social Prescribing referrals made within the last 12 months",
-               "id_cols": ["Date_updated", "Indicator_Name"]}
+               "id_cols": ["Date_updated", "Indicator_Name"],
+               "func":{
+                   "file_id": file_id_spr,
+                   "custom_processing": processing_spr,
+                   "custom_parameters": custom_parameters_spr
+                   }
+        }
     }
 }
 emis_dataset_manager(settings)
