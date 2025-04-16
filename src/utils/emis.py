@@ -162,7 +162,7 @@ def spr_processing(df, parameters):
         "Start_Date":"Time_period_Sortable",
         "End_Date":"Date_updated"
     }
-    df.rename(columns=rename_map)
+    df.rename(columns=rename_map, inplace=True)
 
     unused_cols = ["Percentage", "Males", "Females", "Excluded", "Status"]
 
@@ -314,22 +314,26 @@ def emis_manager(settings, zip=True):
         data_dir = "./data/emis/"
 
     #Run the EMIS pipelines
-    print("CCR Pipeline")
-    emis_cancer(settings, data_dir)
+    print("Running the EMIS Pipeline:")
 
-    print("eSafety Pipeline")
-    emis_esafety(settings, data_dir)
+    if settings["ds"]["CCR"]["run"]:
+        print("-> CCR Pipeline")
+        emis_cancer(settings, data_dir)
 
-    print("FIT Pipeline")
-    emis_fit(settings, data_dir)
+        print("-> eSafety Pipeline")
+        emis_esafety(settings, data_dir)
 
-    print("SPR Pipeline")
-    emis_spr(settings, data_dir)
+    if settings["ds"]["FIT"]["run"]:
+        print("-> FIT Pipeline")
+        emis_fit(settings, data_dir)
+
+    if settings["ds"]["SPR"]["run"]:
+        print("-> SPR Pipeline")
+        emis_spr(settings, data_dir)
 
     #Clean up directory
     if zip:
-        #net.manage_temp()
-        pass
+        net.manage_temp()
 
 # Files I care about (others are unused)
 ## Cancer/CAN004
@@ -346,12 +350,15 @@ settings = {
         {"004":"Cancer Care Review within 12 months",
          "005":"CAN005 - Cancer support offered within 3 months"},
     "ds":{
-        "CCR":{"db_dest_table":"Monthly_CCR_Safety_Netting_Test",
+        "CCR":{"run":True,
+               "db_dest_table":"Monthly_CCR_Safety_Netting_Test",
                "esafety_indicator_name":"USC referrals safety netted via e-safety netting tool",
                "id_cols": ["Start_Date", "Indicator"]},
-        "FIT":{"db_dest_table":"Monthly_FIT_NCL_Test",
+        "FIT":{"run":True,
+               "db_dest_table":"Monthly_FIT_NCL_Test",
                "id_cols": ["Start_Date", "Date_Type"]},
-        "SPR":{"db_dest_table":"Monthly_Population_Health_Test",
+        "SPR":{"run":True,
+               "db_dest_table":"Monthly_Population_Health_Test",
                "indicator_name":"No. of Social Prescribing referrals made within the last 12 months",
                "id_cols": ["Date_updated", "Indicator_Name"]}
     }
