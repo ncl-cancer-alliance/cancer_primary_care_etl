@@ -6,7 +6,7 @@ import zipfile
 #Deletes the tmp folder when recalled
 def manage_temp (dir="./data/", mode=None):
 
-    tmp_dir = dir + "tmp"
+    tmp_dir = dir + "tmp/"
 
     #Check if the tmp folder already exists
     if not(os.path.exists(tmp_dir)) and mode != "-":
@@ -17,10 +17,9 @@ def manage_temp (dir="./data/", mode=None):
         shutil.rmtree(tmp_dir, ignore_errors=True)
     else:
         if mode == "+":
-            print(f"Warning: {dir} already exists and cannot be created.")
+            print(f"Warning: {tmp_dir} already exists and cannot be created.")
         if mode == "-":
-            print(f"Warning: {dir} does not exist and cannot be deleted.")
-        return -1
+            print(f"Warning: {tmp_dir} does not exist and cannot be deleted.")
 
     return tmp_dir
 
