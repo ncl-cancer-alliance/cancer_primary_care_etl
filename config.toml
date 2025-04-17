@@ -4,6 +4,9 @@
 # Note all variables for directories should close the directory as well.
 # Like this:     "./data/"
 # Not like this: "./data"
+# For variables that only contain part of a directory path, only include the closing slash.
+# Like this:     "emis/"
+# Not like this: "/emis/"
 
 
 title = "Cancer Primary Care ETL"
@@ -12,3 +15,37 @@ title = "Cancer Primary Care ETL"
 data_dir = "./data/" # Directory for the data files (e.g. "./data/")
 db_dsn = "SANDPIT"
 db_database = "Data_Lab_NCL_Dev"
+db_schema = "GrahamR"
+
+[emis]
+data_dir = "emis/"
+pipelines = ["CCR", "eSafety", "FIT", "SPR"]
+
+[emis.ccr]
+name = "Cancer Care Reviews"
+subdir_substrings = ["Cancer"]
+db_dest_table = "Monthly_CCR_Safety_Netting_Test"
+data_id_cols = ["Start_Date", "Indicator"]
+metric_id_prefix = "CAN"
+metric_ids = ["004", "005"]
+metric_id_map = {"004" = "CAN004 - Cancer Care Review within 12 months", "005" = "CAN005 - Cancer support offered within 3 months"}
+
+[emis.esafety]
+name = "e-Safety Netting"
+subdir_substrings = ["netting"]
+db_dest_table = "Monthly_CCR_Safety_Netting_Test"
+data_id_cols = ["Start_Date", "Indicator"]
+esafety_indicator_name = "USC referrals safety netted via e-safety netting tool"
+
+[emis.fit]
+name = "FIT"
+subdir_substrings = ["FIT"]
+db_dest_table = "Monthly_FIT_NCL_Test"
+data_id_cols = ["Start_Date", "Date_Type"]
+
+[emis.spr]
+name = "Social Prescribing Referrals"
+subdir_substrings = ["social", "prescrib"]
+db_dest_table = "Monthly_Population_Health_Test"
+data_id_cols = ["Date_updated", "Indicator_Name"]
+indicator_name = "No. of Social Prescribing referrals made within the last 12 months"
