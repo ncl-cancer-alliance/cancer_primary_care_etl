@@ -218,6 +218,11 @@ def custom_parameters_spr(settings, ds, data_file):
 def process_emis_datafile(data_file, ds, 
                           custom_processing=False, custom_parameters=None):
 
+    #Convert the file to .csv if saved as .xlsx
+    file_ext = data_file.split(".")[-1]
+    if file_ext != "csv":
+        data_file = net.convert_csv(data_file, src_ext=file_ext)
+
     #Check if the date of the data has been derived yet
     global date_data_start
     global date_data_end
@@ -352,30 +357,30 @@ settings = {
                "name":"Cancer Care Reviews",
                "subdir_substrings":["Cancer"],
                "db_dest_table":"Monthly_CCR_Safety_Netting_Test",
-               "metric_id_prefix": "CAN",
-               "metric_ids": ["004", "005"],
-               "metric_id_map":{
-                   "004":"CAN004 - Cancer Care Review within 12 months",
-                   "005":"CAN005 - Cancer support offered within 3 months"},
                "id_cols": ["Start_Date", "Indicator"],
                "func":{
                    "file_id": file_id_ccr,
                    "custom_processing": processing_ccr,
                    "custom_parameters": custom_parameters_ccr
-               }
+               },
+               "metric_id_prefix": "CAN",
+               "metric_ids": ["004", "005"],
+               "metric_id_map":{
+                   "004":"CAN004 - Cancer Care Review within 12 months",
+                   "005":"CAN005 - Cancer support offered within 3 months"}
         },
         "eSafety":{
             "run":True,
             "name":"e-Safety Netting",
             "subdir_substrings":["netting"],
             "db_dest_table":"Monthly_CCR_Safety_Netting_Test",
-            "esafety_indicator_name":"USC referrals safety netted via e-safety netting tool",
             "id_cols": ["Start_Date", "Indicator"],
             "func":{
                    "file_id": file_id_esafety,
                    "custom_processing": processing_ccr,
                    "custom_parameters": custom_parameters_esafety
-               }
+               },
+            "esafety_indicator_name":"USC referrals safety netted via e-safety netting tool",
         },
         "FIT":{"run":True,
                "name":"FIT",
@@ -392,13 +397,13 @@ settings = {
                "name":"Social Prescribing Referrals",
                "subdir_substrings":["social", "prescrib"],
                "db_dest_table":"Monthly_Population_Health_Test",
-               "indicator_name":"No. of Social Prescribing referrals made within the last 12 months",
                "id_cols": ["Date_updated", "Indicator_Name"],
                "func":{
                    "file_id": file_id_spr,
                    "custom_processing": processing_spr,
                    "custom_parameters": custom_parameters_spr
-                   }
+                   },
+                "indicator_name":"No. of Social Prescribing referrals made within the last 12 months",
         }
     }
 }

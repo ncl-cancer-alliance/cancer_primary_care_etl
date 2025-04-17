@@ -1,3 +1,4 @@
+import pandas as pd
 import os
 import shutil
 import zipfile
@@ -35,3 +36,15 @@ def unzip_file(zip_file, source_dir="./data/", dest_dir=False):
 
     with zipfile.ZipFile(file_path, 'r') as zip_ref:
         zip_ref.extractall(dest_dir)
+
+#Function to convert excel worksheets into csv files
+def convert_csv(file, src_ext):
+    #Save the existing file as a csv
+    df = pd.read_excel(file, engine='openpyxl')
+    csv_filename = ".".join(file.split(".")[:-1]) + ".csv"
+    df.to_csv(csv_filename)
+
+    #Delete the original file
+    os.remove(file)
+
+    return csv_filename
