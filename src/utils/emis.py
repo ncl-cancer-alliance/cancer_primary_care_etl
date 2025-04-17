@@ -1,3 +1,10 @@
+# Files of interest (others are unused)
+## Cancer/CAN004
+## Cancer/CAN005
+## Electronic safety netting audit/Pts with...
+## FIT/...before Ref.csv
+## social prescribing refferal/Social prescriber referrals
+
 #Standard Modules
 import csv
 import os
@@ -6,8 +13,8 @@ import pandas as pd
 from datetime import date, datetime
 
 #Util Modules
-import database_util as db
-import network_util as net
+import utils.database_util as db
+import utils.network_util as net
 
 #Global variables
 date_data_start = False
@@ -114,7 +121,7 @@ def upload_data(engine, data, table, schema, id_cols=["Start_Date"]):
         if len(unique_vals) == 1:
             line += f"[{col}] = '{unique_vals[0]}' "
         else:
-            line += f"[{col}] IN '{', '.join(unique_vals)}' "
+            line += f"[{col}] IN '({', '.join(unique_vals)})' "
 
     query = query_base + line 
 
@@ -319,13 +326,11 @@ def emis_dataset_manager(settings, zip=True):
 
     pipelines = settings["emis"]["pipelines"]
 
-    runtime_pipelines = [x for x in pipelines if settings["ds"][x]["run"]]
-
     #Run the EMIS pipelines
-    if runtime_pipelines:
+    if pipelines:
         print("Running the EMIS Pipeline:")
 
-    for ds in runtime_pipelines:
+    for ds in pipelines:
         print(f"-> {ds} Pipeline")
 
         #Custom processing functions
@@ -343,76 +348,3 @@ def emis_dataset_manager(settings, zip=True):
     #Clean up directory
     if zip:
         net.manage_temp()
-
-# Files I care about (others are unused)
-## Cancer/CAN004
-## Cancer/CAN005
-## Electronic safety netting audit/Pts with...
-## FIT/...before Ref.csv
-## social prescribing refferal/Social prescriber referrals
-
-settings = {
-    "base_dir": "./data/",
-    "db_dsn": "SANDPIT",
-    "db_database": "Data_Lab_NCL_Dev",
-    "db_dest_schema": "GrahamR",
-    "emis":{
-        "data_dir": "emis/",
-        "pipelines": ["CCR", "eSafety", "FIT", "SPR"]
-    },
-    "ds":{
-        "CCR":{"run":True,
-               "name":"Cancer Care Reviews",
-               "subdir_substrings":["Cancer"],
-               "db_dest_table":"Monthly_CCR_Safety_Netting_Test",
-               "id_cols": ["Start_Date", "Indicator"],
-               "func":{
-                   "file_id": file_id_ccr,
-                   "custom_processing": processing_ccr,
-                   "custom_parameters": custom_parameters_ccr
-               },
-               "metric_id_prefix": "CAN",
-               "metric_ids": ["004", "005"],
-               "metric_id_map":{
-                   "004":"CAN004 - Cancer Care Review within 12 months",
-                   "005":"CAN005 - Cancer support offered within 3 months"}
-        },
-        "eSafety":{
-            "run":True,
-            "name":"e-Safety Netting",
-            "subdir_substrings":["netting"],
-            "db_dest_table":"Monthly_CCR_Safety_Netting_Test",
-            "id_cols": ["Start_Date", "Indicator"],
-            "func":{
-                   "file_id": file_id_esafety,
-                   "custom_processing": processing_ccr,
-                   "custom_parameters": custom_parameters_esafety
-               },
-            "esafety_indicator_name":"USC referrals safety netted via e-safety netting tool",
-        },
-        "FIT":{"run":True,
-               "name":"FIT",
-               "subdir_substrings":["FIT"],
-               "db_dest_table":"Monthly_FIT_NCL_Test",
-               "id_cols": ["Start_Date", "Date_Type"],
-               "func":{
-                   "file_id": file_id_fit,
-                   "custom_processing": processing_fit,
-                   "custom_parameters": False
-                   }
-        },
-        "SPR":{"run":True,
-               "name":"Social Prescribing Referrals",
-               "subdir_substrings":["social", "prescrib"],
-               "db_dest_table":"Monthly_Population_Health_Test",
-               "id_cols": ["Date_updated", "Indicator_Name"],
-               "func":{
-                   "file_id": file_id_spr,
-                   "custom_processing": processing_spr,
-                   "custom_parameters": custom_parameters_spr
-                   },
-                "indicator_name":"No. of Social Prescribing referrals made within the last 12 months",
-        }
-    }
-}
-emis_dataset_manager(settings)
