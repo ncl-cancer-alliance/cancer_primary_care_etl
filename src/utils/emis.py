@@ -14,11 +14,12 @@ date_data_start = False
 date_data_end = None
 
 #Unzip the EMIS zip file
-def extract_files():
+def extract_files(emis_dir):
     tmp_dir = net.manage_temp(mode="+")
 
     net.unzip_file(
-        "Cancer,FIT,social prescribing & electronic safety netting audit.zip", 
+        "Cancer,FIT,social prescribing & electronic safety netting audit.zip",
+        source_dir=emis_dir,
         dest_dir=tmp_dir)
     
     return tmp_dir
@@ -307,13 +308,16 @@ def emis_file_manager(settings, parent_dir, ds,
 #Parent function to handle all pipelines and data loading
 def emis_dataset_manager(settings, zip=True):
 
+    #Set the EMIS Data parent directory
+    emis_dir = settings["base_dir"] + settings["emis"]["data_dir"]
+
     #Extract the data
     if zip:
-        data_dir = extract_files()
+        data_dir = extract_files(emis_dir)
     else:
-        data_dir = "./data/emis/"
+        data_dir = emis_dir
 
-    pipelines = settings["emis_pipelines"]
+    pipelines = settings["emis"]["pipelines"]
 
     runtime_pipelines = [x for x in pipelines if settings["ds"][x]["run"]]
 
@@ -348,10 +352,14 @@ def emis_dataset_manager(settings, zip=True):
 ## social prescribing refferal/Social prescriber referrals
 
 settings = {
+    "base_dir": "./data/",
     "db_dsn": "SANDPIT",
     "db_database": "Data_Lab_NCL_Dev",
     "db_dest_schema": "GrahamR",
-    "emis_pipelines": ["CCR", "eSafety", "FIT", "SPR"],
+    "emis":{
+        "data_dir": "emis/",
+        "pipelines": ["CCR", "eSafety", "FIT", "SPR"]
+    },
     "ds":{
         "CCR":{"run":True,
                "name":"Cancer Care Reviews",
