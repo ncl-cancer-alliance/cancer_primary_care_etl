@@ -223,7 +223,7 @@ def custom_parameters_spr(settings, ds, data_file):
 ####################################
 
 #Function to process emis data files
-def process_emis_datafile(data_file, ds, 
+def process_emis_datafile(settings, data_file, ds, 
                           custom_processing=False, custom_parameters=None):
 
     #Convert the file to .csv if saved as .xlsx
@@ -308,7 +308,7 @@ def emis_file_manager(settings, parent_dir, ds,
             else:
                 custom_parameters = False
 
-            process_emis_datafile(full_path, ds,
+            process_emis_datafile(settings, full_path, ds,
                                     custom_processing=func_custom_processing,
                                     custom_parameters=custom_parameters)          
 

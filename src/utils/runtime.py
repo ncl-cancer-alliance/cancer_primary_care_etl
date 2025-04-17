@@ -21,7 +21,7 @@ def build_settings():
         "base_dir": config["base"]["data_dir"],
         "db_dsn": config["base"]["db_dsn"],
         "db_database": config["base"]["db_database"],
-        "db_dest_scheam": config["base"]["db_schema"],
+        "db_dest_schema": config["base"]["db_schema"],
 
         "emis":{
             "run": (getenv(f"RUN_EMIS") != "False"),
