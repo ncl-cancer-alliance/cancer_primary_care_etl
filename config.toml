@@ -1,0 +1,14 @@
+# This contains runtime settings for the code.
+# Settings specified in the toml should be largely static as these are saved to the repo.
+
+# Note all variables for directories should close the directory as well.
+# Like this:     "./data/"
+# Not like this: "./data"
+
+
+title = "Cancer Primary Care ETL"
+
+[base]
+data_dir = "./data/" # Directory for the data files (e.g. "./data/")
+db_dsn = "SANDPIT"
+db_database = "Data_Lab_NCL_Dev"
