@@ -19,10 +19,22 @@ def get_indicator_metadata(indicator_ids):
 def get_data_for_indicator(indicator_id):
     pass
 
-res = get_indicator_metadata(276)
+def indicator_manager(settings):
+    #Get indicators
+    indicators = settings["pop"]["indicators"]
 
-print(res)
-print(res.columns)
+    #Get metadata on these indicators
+    metadata = get_indicator_metadata(indicators)
+
+    #Determine which indicators has new data
+
+
+    print(metadata)
+
+settings = build_settings()
+indicator_manager(settings)
+
+#res = get_indicator_metadata(['91355', '91357', '276', '91280', '91845', '92588', '93553', '91337','93275'])
 
 # Set list of indicators
 # Check for new data
