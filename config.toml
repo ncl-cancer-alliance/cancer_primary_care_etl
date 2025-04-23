@@ -49,3 +49,6 @@ subdir_substrings = ["social", "prescrib"]
 db_dest_table = "Monthly_Population_Health_Test"
 data_id_cols = ["Date_updated", "Indicator_Name"]
 indicator_name = "No. of Social Prescribing referrals made within the last 12 months"
+
+[pop]
+all_indicators = [276, 91280, 91337, 91355, 91357, 91845, 92588, 94136, 93275, 93553]

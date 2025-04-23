@@ -5,7 +5,11 @@ import toml
 from dotenv import load_dotenv
 from os import getenv
 
-from utils.emis import *
+#Try Except to allow for debugging
+try:   
+    from utils.emis import *
+except:
+    from emis import *
 
 def build_settings():
     #Load env settings
@@ -16,6 +20,17 @@ def build_settings():
 
     #Load which EMIS datasets are selected
     emis_datasets = config["emis"]["pipelines"]
+
+    #List of all pop health metrics
+    pop_all_indicators = config["pop"]["all_indicators"]
+
+    #Determine which pop health indicators are pulled based on the .env settings
+    if getenv(f"POP_RUNALL") != "False":
+        #If POP_RUNALL is True then also include indicators set to Default
+        pop_indicator_criteria = ["True", "Default"]
+    else:
+        #If POP_RUNALL is False then only include indicators set to True
+        pop_indicator_criteria = ["True"]
 
     settings = {
         "base_dir": config["base"]["data_dir"],
@@ -29,6 +44,10 @@ def build_settings():
             "data_dir": config["emis"]["data_dir"],
             "pipelines":(
                 [x for x in emis_datasets if getenv(f"EMIS_{x}") != "False"])
+        },
+        "pop":{
+            "indicators": ([x for x in pop_all_indicators if (
+                getenv(f"POP_{x}") in pop_indicator_criteria)])
         },
         "ds":{
             "CCR":{
