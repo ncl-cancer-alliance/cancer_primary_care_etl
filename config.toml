@@ -55,4 +55,6 @@ all_indicators = [276, 91280, 91337, 91355, 91357, 91845, 92588, 94136, 93275, 9
 area_code_ncl = "nE38000240"
 area_codes_london = ["nE38000240", "nE38000244", "nE38000245", "nE38000255", "nE38000256"]
 db_dest_table_practice = "Monthly_Population_Health_Test"
+db_dest_table_benchmark = "cancer_populationhealth_benchmark_test"
+db_dest_table_metadata = "cancer_populationhealth_metadata_test"
 query_local_metadata = "./docs/pop_local_metadata.sql"
