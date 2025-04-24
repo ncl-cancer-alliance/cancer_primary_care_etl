@@ -9,6 +9,7 @@ settings = build_settings()
 
 if settings["emis"]["run"]:
     emis.emis_dataset_manager(settings, settings["emis"]["zip"])
+    print()
 
 if settings["pop"]["run"]:
     print("Running the Population Health Pipeline:")

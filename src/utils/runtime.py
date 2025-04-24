@@ -55,6 +55,7 @@ def build_settings():
             "db_dest_table_benchmark": config["pop"]["db_dest_table_benchmark"],
             "db_dest_table_metadata": config["pop"]["db_dest_table_metadata"],
             "query_local_metadata": config["pop"]["query_local_metadata"],
+            "detailed_logging": (getenv(f"POP_DETAILED_LOGGING") != "False"),
             "force_update": (getenv(f"POP_FORCE") != "False")
         },
         "ds":{

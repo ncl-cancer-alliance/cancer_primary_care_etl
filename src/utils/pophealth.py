@@ -50,11 +50,13 @@ def get_new_data_indicators(settings, indicators, remote_metadata):
     #Rename columns
     remote_dates.rename(
         columns={
-            "Indicator ID":"indicator_id", 
+            "Indicator ID":"indicator_id",
+            "Indicator":"indicator_name",
             "Date updated": "date_updated"},
         inplace=True)
     #Only keep relevant columns
-    remote_dates = remote_dates[["indicator_id", "date_updated"]]
+    remote_dates = (
+        remote_dates[["indicator_id", "indicator_name", "date_updated"]])
     #Convert ids to strings
     remote_dates["indicator_id"] = remote_dates["indicator_id"].astype(str)
     #Convert date format
@@ -68,12 +70,18 @@ def get_new_data_indicators(settings, indicators, remote_metadata):
         #Merge the local and remote
         merged = remote_dates.merge(
             df_meta, on="indicator_id", 
-            suffixes=("_remote", "_local"),
+            suffixes=("_online", "_local"),
             how="left")
 
         #Filter out rows where the remote date matches the local date
         merged = merged[(
-            merged["date_updated_local"] != merged["date_updated_remote"])]
+            merged["date_updated_local"] != merged["date_updated_online"])]
+        
+        #If enabled, log the metrics with new data
+        if settings["pop"]["detailed_logging"]:
+            print("\n->Indicators with new data:\n")
+            print(merged[["indicator_id", "indicator_name", 
+                          "date_updated_online"]], "\n")
         
         new_data_indicators = list(merged["indicator_id"].unique())
 
@@ -176,6 +184,7 @@ def indicator_manager(settings):
     if target_indicators:
 
         #Practice Level Data
+        print("-> Fetching the Practice Level data (this may take a minute)")
         df_prac = et_practice(settings, target_indicators)
 
         #Upload the output
@@ -183,6 +192,9 @@ def indicator_manager(settings):
             settings, df_prac, 
             dest_table=settings["pop"]["db_dest_table_practice"],
             indicators=target_indicators)
+        print("-> Data processed.")
+    else:
+        print("-> No new data found.")
     
     ## In a later version, add benchmarking and metadata table
 
