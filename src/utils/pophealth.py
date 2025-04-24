@@ -44,26 +44,26 @@ def get_new_data_indicators(settings, indicators, remote_metadata):
     df_meta = df_meta[df_meta["indicator_id"].isin(
         [str(x) for x in indicators])]
 
+    #Format remote metadata in terms of the local metadata
+    remote_dates = remote_metadata.copy()
+    #Rename columns
+    remote_dates.rename(
+        columns={
+            "Indicator ID":"indicator_id", 
+            "Date updated": "date_updated"},
+        inplace=True)
+    #Only keep relevant columns
+    remote_dates = remote_dates[["indicator_id", "date_updated"]]
+    #Convert ids to strings
+    remote_dates["indicator_id"] = remote_dates["indicator_id"].astype(str)
+    #Convert date format
+    remote_dates["date_updated"] = pd.to_datetime(
+        remote_dates["date_updated"], format="%d/%m/%Y")
+
     #If force update is enable then rerun all indicators even if up to date
     if settings["pop"]["force_update"]:
-        new_data_indicators = list(df_meta["indicator_id"].unique())
+        new_data_indicators = list(remote_dates["indicator_id"].unique())
     else:
-        #Format remote metadata in terms of the local metadata
-        remote_dates = remote_metadata.copy()
-        #Rename columns
-        remote_dates.rename(
-            columns={
-                "Indicator ID":"indicator_id", 
-                "Date updated": "date_updated"},
-            inplace=True)
-        #Only keep relevant columns
-        remote_dates = remote_dates[["indicator_id", "date_updated"]]
-        #Convert ids to strings
-        remote_dates["indicator_id"] = remote_dates["indicator_id"].astype(str)
-        #Convert date format
-        remote_dates["date_updated"] = pd.to_datetime(
-            remote_dates["date_updated"], format="%d/%m/%Y")
-
         #Merge the local and remote
         merged = remote_dates.merge(
             df_meta, on="indicator_id", 
