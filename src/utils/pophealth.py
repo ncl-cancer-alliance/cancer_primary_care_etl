@@ -1,11 +1,10 @@
 import requests
 import fingertips_py as ftp
+import pandas as pd
 
 from io import BytesIO
 from sqlalchemy import create_engine, MetaData, text, insert
 from urllib.parse import urlencode
-
-from runtime import *
 
 #Util Modules
 try:
@@ -173,20 +172,19 @@ def indicator_manager(settings):
     #Determine which indicators has new data
     target_indicators = get_new_data_indicators(settings, indicators, metadata)
 
-    #Practice Level Data
-    df_prac = et_practice(settings, target_indicators)
+    #Only process data is there is at least 1 target indicator
+    if target_indicators:
 
-    #Upload the output
-    upload_pop_data(
-        settings, df_prac, 
-        dest_table=settings["pop"]["db_dest_table_practice"],
-        indicators=indicators)
+        #Practice Level Data
+        df_prac = et_practice(settings, target_indicators)
+
+        #Upload the output
+        upload_pop_data(
+            settings, df_prac, 
+            dest_table=settings["pop"]["db_dest_table_practice"],
+            indicators=target_indicators)
     
     ## In a later version, add benchmarking and metadata table
-
-
-settings = build_settings()
-indicator_manager(settings)
 
 #res = get_indicator_metadata(['91355', '91357', '276', '91280', '91845', '92588', '93553', '91337','93275'])
 

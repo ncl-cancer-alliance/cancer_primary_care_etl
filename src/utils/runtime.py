@@ -46,6 +46,7 @@ def build_settings():
                 [x for x in emis_datasets if getenv(f"EMIS_{x}") != "False"])
         },
         "pop":{
+            "run": (getenv(f"RUN_POP") != "False"),
             "indicators": ([x for x in pop_all_indicators if (
                 getenv(f"POP_{x}") in pop_indicator_criteria)]),
             "area_code_ncl": config["pop"]["area_code_ncl"],
