@@ -5,7 +5,11 @@ import toml
 from dotenv import load_dotenv
 from os import getenv
 
-from utils.emis import *
+#Try Except to allow for debugging
+try:   
+    from utils.emis import *
+except:
+    from emis import *
 
 def build_settings():
     #Load env settings
@@ -17,11 +21,22 @@ def build_settings():
     #Load which EMIS datasets are selected
     emis_datasets = config["emis"]["pipelines"]
 
+    #List of all pop health metrics
+    pop_all_indicators = config["pop"]["all_indicators"]
+
+    #Determine which pop health indicators are pulled based on the .env settings
+    if getenv(f"POP_RUNALL") != "False":
+        #If POP_RUNALL is True then also include indicators set to Default
+        pop_indicator_criteria = ["True", "Default"]
+    else:
+        #If POP_RUNALL is False then only include indicators set to True
+        pop_indicator_criteria = ["True"]
+
     settings = {
         "base_dir": config["base"]["data_dir"],
         "db_dsn": config["base"]["db_dsn"],
         "db_database": config["base"]["db_database"],
-        "db_dest_scheam": config["base"]["db_schema"],
+        "db_dest_schema": config["base"]["db_schema"],
 
         "emis":{
             "run": (getenv(f"RUN_EMIS") != "False"),
@@ -29,6 +44,19 @@ def build_settings():
             "data_dir": config["emis"]["data_dir"],
             "pipelines":(
                 [x for x in emis_datasets if getenv(f"EMIS_{x}") != "False"])
+        },
+        "pop":{
+            "run": (getenv(f"RUN_POP") != "False"),
+            "indicators": ([x for x in pop_all_indicators if (
+                getenv(f"POP_{x}") in pop_indicator_criteria)]),
+            "area_code_ncl": config["pop"]["area_code_ncl"],
+            "area_codes_london": config["pop"]["area_codes_london"],
+            "db_dest_table_practice": config["pop"]["db_dest_table_practice"],
+            "db_dest_table_benchmark": config["pop"]["db_dest_table_benchmark"],
+            "db_dest_table_metadata": config["pop"]["db_dest_table_metadata"],
+            "query_local_metadata": config["pop"]["query_local_metadata"],
+            "detailed_logging": (getenv(f"POP_DETAILED_LOGGING") != "False"),
+            "force_update": (getenv(f"POP_FORCE") != "False")
         },
         "ds":{
             "CCR":{
