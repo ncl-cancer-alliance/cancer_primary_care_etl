@@ -48,6 +48,11 @@ def build_settings():
         "pop":{
             "indicators": ([x for x in pop_all_indicators if (
                 getenv(f"POP_{x}") in pop_indicator_criteria)]),
+            "area_code_ncl": config["pop"]["area_code_ncl"],
+            "area_codes_london": config["pop"]["area_codes_london"],
+            "db_dest_table_practice": config["pop"]["db_dest_table_practice"],
+            "db_dest_table_benchmark": config["pop"]["db_dest_table_benchmark"],
+            "db_dest_table_metadata": config["pop"]["db_dest_table_metadata"],
             "query_local_metadata": config["pop"]["query_local_metadata"],
             "force_update": (getenv(f"POP_FORCE") != "False")
         },
