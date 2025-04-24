@@ -47,7 +47,9 @@ def build_settings():
         },
         "pop":{
             "indicators": ([x for x in pop_all_indicators if (
-                getenv(f"POP_{x}") in pop_indicator_criteria)])
+                getenv(f"POP_{x}") in pop_indicator_criteria)]),
+            "query_local_metadata": config["pop"]["query_local_metadata"],
+            "force_update": (getenv(f"POP_FORCE") != "False")
         },
         "ds":{
             "CCR":{

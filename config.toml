@@ -52,3 +52,4 @@ indicator_name = "No. of Social Prescribing referrals made within the last 12 mo
 
 [pop]
 all_indicators = [276, 91280, 91337, 91355, 91357, 91845, 92588, 94136, 93275, 93553]
+query_local_metadata = "./docs/pop_local_metadata.sql"
