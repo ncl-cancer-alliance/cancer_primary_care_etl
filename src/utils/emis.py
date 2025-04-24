@@ -13,8 +13,12 @@ import pandas as pd
 from datetime import date, datetime
 
 #Util Modules
-import utils.database_util as db
-import utils.network_util as net
+try:
+    import utils.database_util as db
+    import utils.network_util as net
+except:
+    import database_util as db
+    import network_util as net
 
 #Global variables
 date_data_start = False
