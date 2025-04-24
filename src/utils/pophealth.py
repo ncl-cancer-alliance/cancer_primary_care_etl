@@ -1,7 +1,9 @@
 import requests
 import fingertips_py as ftp
 
+from io import BytesIO
 from sqlalchemy import create_engine, MetaData, text, insert
+from urllib.parse import urlencode
 
 from runtime import *
 
@@ -78,17 +80,73 @@ def get_new_data_indicators(settings, indicators, remote_metadata):
 
     return new_data_indicators
 
-
 #Get data for the given indicator
-def get_data_for_indicators(indicators, area_type_id=7):
-    df = ftp.get_data_by_indicator_ids(
-        indicators, area_type_id=7)
+#Area Type ID: 7-GP Practices, 221-ICBs 
+#(No data for regions for many metrics so use ICB and aggregate)
+#Parent Area Type ID: 66-ICBs [15 is the default used by ftp if unspecified]
+def get_data_for_indicators(indicators, area_type_id=7, 
+                            parent_area_type_id=15,
+                            read_chunks=8192):
     
-    print(df.head(10)[["Area Code", "Area Name"]])
+    #Set up url and end point
+    base_url = 'https://fingertipsws.phe.org.uk/api/'
+    endpoint = 'all_data/csv/by_indicator_id'
 
-    df.to_csv("testout.csv")
+    #Set up parameters for the request
+    params = {
+        'indicator_ids': ','.join(indicators),
+        'child_area_type_id': area_type_id,
+        'parent_area_type_id': parent_area_type_id,
+        'filter_by_area_codes': False
+    }
+
+    #Make the GET API request
+    full_url = f"{base_url}{endpoint}?{urlencode(params)}"
+    response = requests.get(full_url)
+    response.raise_for_status()
+
+    #Save the response if successful
+    chunk_iter = pd.read_csv(BytesIO(response.content), chunksize=read_chunks)
+
+    # Combine all chunks into one DataFrame
+    df = pd.concat(chunk_iter, ignore_index=True)
     
     return df
+
+#Format the data (i.e. column names and included columns)
+def format_indicator_data(settings, df):
+
+    #Remove whitespace in column names
+    df.columns = df.columns.str.replace('\n', ' ', regex=False)
+    df.columns = df.columns.str.strip().str.replace(' ', '_')
+
+    df = df[["Indicator_ID", "Indicator_Name", "Area_Code", "Area_Name", 
+             "Value","Denominator", "Time_period_Sortable", "Time_period_range",
+             ]]
+    
+    return df
+
+#Upload the Population Health Data
+def upload_pop_data(settings, df, dest_table):
+    pass
+
+#Function to handle the Extraction and Transformation of Practice level data
+def et_practice(settings, indicators):
+
+    #Extract the data
+    df_prac = get_data_for_indicators(indicators, area_type_id=7, 
+                                      parent_area_type_id=66)
+    #Transform the data
+    #Filter to NCL Practices
+    df_prac = (
+        df_prac[df_prac["Parent Code"] == settings["pop"]["area_code_ncl"]])
+    
+    #Format the output
+    df_prac = format_indicator_data(settings, df_prac)
+
+    #Upload the output
+    upload_pop_data(
+        settings, df_prac, settings["pop"]["db_dest_table_practice"])
 
 #Wrapper function to manage the population health pipeline
 def indicator_manager(settings):
@@ -101,8 +159,8 @@ def indicator_manager(settings):
     #Determine which indicators has new data
     target_indicators = get_new_data_indicators(settings, indicators, metadata)
 
-    #Download data
-    df = get_data_for_indicators(target_indicators)
+    #Practice Level Data
+    df_prac = et_practice(settings, target_indicators)
 
 
 settings = build_settings()
