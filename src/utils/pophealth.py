@@ -127,8 +127,24 @@ def format_indicator_data(settings, df):
     return df
 
 #Upload the Population Health Data
-def upload_pop_data(settings, df, dest_table):
-    pass
+def upload_pop_data(settings, df, dest_table, indicators):
+
+    #Get schema
+    dest_schema = settings["db_dest_schema"]
+
+    #Set up the engine and db connection
+    engine = db.db_connect(settings["db_dsn"], settings["db_database"])
+
+    #Delete overlapping data
+    query = (f"DELETE FROM [{dest_schema}].[{dest_table}]" +
+                 f" WHERE [Indicator_Id] IN ({", ".join(indicators)})")
+    
+    db.execute_query(engine, query)
+
+    #Upload the new data
+    #Basic upload code
+    df.to_sql(name=dest_table, con=engine, schema=dest_schema,
+                if_exists="append", index=False, chunksize=100, method="multi")
 
 #Function to handle the Extraction and Transformation of Practice level data
 def et_practice(settings, indicators):
@@ -141,12 +157,10 @@ def et_practice(settings, indicators):
     df_prac = (
         df_prac[df_prac["Parent Code"] == settings["pop"]["area_code_ncl"]])
     
-    #Format the output
+    #Format the output as standard for the indicator data
     df_prac = format_indicator_data(settings, df_prac)
 
-    #Upload the output
-    upload_pop_data(
-        settings, df_prac, settings["pop"]["db_dest_table_practice"])
+    return df_prac
 
 #Wrapper function to manage the population health pipeline
 def indicator_manager(settings):
@@ -161,6 +175,14 @@ def indicator_manager(settings):
 
     #Practice Level Data
     df_prac = et_practice(settings, target_indicators)
+
+    #Upload the output
+    upload_pop_data(
+        settings, df_prac, 
+        dest_table=settings["pop"]["db_dest_table_practice"],
+        indicators=indicators)
+    
+    ## In a later version, add benchmarking and metadata table
 
 
 settings = build_settings()
