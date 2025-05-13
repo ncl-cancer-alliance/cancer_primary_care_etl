@@ -156,6 +156,11 @@ def processing_fit(df, parameters):
 
     df["Date_Type"] = "Monthly"
 
+    #Convert the FIT % into a float
+    df["Percentage"] = df["Percentage"].str[:-1].astype(float)/100
+
+    print(df.head())
+
     return df
 
 #Parameters = Indicator Name
