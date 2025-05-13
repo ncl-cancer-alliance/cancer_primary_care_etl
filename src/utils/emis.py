@@ -154,12 +154,11 @@ def processing_ccr(df, parameters):
 #Parameters = None
 def processing_fit(df, parameters):
 
+    #Set Date Type
     df["Date_Type"] = "Monthly"
 
     #Convert the FIT % into a float
     df["Percentage"] = df["Percentage"].str[:-1].astype(float)/100
-
-    print(df.head())
 
     return df
 
