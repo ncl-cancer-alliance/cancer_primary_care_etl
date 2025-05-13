@@ -75,11 +75,11 @@ def derive_date(data_file, keyword_row="Last Run", keyword_col="Relative Date"):
                             row[idx+1], '%d-%b-%Y').date()
                         
                         #Update the date data start and end variables
-                        date_data_start = rel_date
-                        date_data_end = datetime(
+                        date_data_start = datetime(
                             rel_date.year + int(rel_date.month / 12), #Year
-                            ((rel_date.month % 12) + 1), #Month
+                            ((rel_date.month % 12) - 1), #Month
                             1).date() #Day
+                        date_data_end = rel_date
 
                         return True
     
@@ -154,7 +154,11 @@ def processing_ccr(df, parameters):
 #Parameters = None
 def processing_fit(df, parameters):
 
+    #Set Date Type
     df["Date_Type"] = "Monthly"
+
+    #Convert the FIT % into a float
+    df["Percentage"] = df["Percentage"].str[:-1].astype(float)/100
 
     return df
 
