@@ -163,7 +163,10 @@ def et_practice(settings, indicators):
     #Filter to NCL Practices
     df_prac = (
         df_prac[df_prac["Parent Code"] == settings["pop"]["area_code_ncl"]])
-    
+    #Format the Time Period field
+    df_prac["Time period Sortable"] = (
+        df_prac["Time period Sortable"].astype(str).str[:4])
+
     #Format the output as standard for the indicator data
     df_prac = format_indicator_data(settings, df_prac)
 
