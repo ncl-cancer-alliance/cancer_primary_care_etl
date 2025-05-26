@@ -147,7 +147,12 @@ def processing_ccr(df, parameters):
     #Convert date into "MMM yy"
     date_string = date_data_start.strftime("%b %y")
 
+    #Format indicator value
     df["Indicator"] = parameters + " - " + date_string
+
+    #Convert percentage to float
+    df["Percentage"] = df["Percentage"].str[:-1].astype(float)
+    df["Percentage"] = df["Percentage"] / 100
 
     return df
 
@@ -166,6 +171,10 @@ def processing_fit(df, parameters):
 def processing_spr(df, parameters):
     #Add Indicator Name to data
     df["Indicator_Name"] = parameters
+
+    #Convert date to string to avoid unusual formatting when SQL converts
+    df["Start_Date"] = pd.to_datetime(df["Start_Date"])
+    df["Start_Date"] = df["Start_Date"].dt.strftime('%Y-%m-%d')
 
     #Rename columns to match the Pop Health table schematics
     rename_map = {
@@ -278,6 +287,7 @@ def process_emis_datafile(settings, data_file, ds,
 
     #Upload the new data (Replace this in the future with more modular solution)
     engine = db.db_connect(settings["db_dsn"], settings["db_database"])
+
     upload_data(engine, df, 
                 settings["ds"][ds]["db_dest_table"], settings["db_dest_schema"],
                 id_cols=settings["ds"][ds]["id_cols"])
