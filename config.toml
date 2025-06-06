@@ -24,7 +24,7 @@ pipelines = ["CCR", "eSafety", "FIT", "SPR"]
 [emis.ccr]
 name = "Cancer Care Reviews"
 subdir_substrings = ["Cancer"]
-db_dest_table = "Monthly_CCR_Safety_Netting_Test"
+db_dest_table = "Monthly_CCR_Safety_Netting"
 data_id_cols = ["Start_Date", "Indicator"]
 metric_id_prefix = "CAN"
 metric_ids = ["004", "005"]
@@ -33,20 +33,20 @@ metric_id_map = {"004" = "CAN004 - Cancer Care Review within 12 months", "005" =
 [emis.esafety]
 name = "e-Safety Netting"
 subdir_substrings = ["netting"]
-db_dest_table = "Monthly_CCR_Safety_Netting_Test"
+db_dest_table = "Monthly_CCR_Safety_Netting"
 data_id_cols = ["Start_Date", "Indicator"]
 esafety_indicator_name = "USC referrals safety netted via e-safety netting tool"
 
 [emis.fit]
 name = "FIT"
 subdir_substrings = ["FIT"]
-db_dest_table = "Monthly_FIT_NCL_Test"
+db_dest_table = "Monthly_FIT_NCL"
 data_id_cols = ["Start_Date", "Date_Type"]
 
 [emis.spr]
 name = "Social Prescribing Referrals"
 subdir_substrings = ["social", "prescrib"]
-db_dest_table = "Monthly_Population_Health_Test"
+db_dest_table = "Monthly_Population_Health"
 data_id_cols = ["Date_updated", "Indicator_Name"]
 indicator_name = "No. of Social Prescribing referrals made within the last 12 months"
 
@@ -54,7 +54,7 @@ indicator_name = "No. of Social Prescribing referrals made within the last 12 mo
 all_indicators = [276, 91280, 91337, 91355, 91357, 91845, 92588, 94136, 93275, 93553]
 area_code_ncl = "nE38000240"
 area_codes_london = ["nE38000240", "nE38000244", "nE38000245", "nE38000255", "nE38000256"]
-db_dest_table_practice = "Monthly_Population_Health_Test"
-db_dest_table_benchmark = "cancer_populationhealth_benchmark_test"
-db_dest_table_metadata = "cancer_populationhealth_metadata_test"
+db_dest_table_practice = "Monthly_Population_Health"
+db_dest_table_benchmark = "cancer_populationhealth_benchmark"
+db_dest_table_metadata = "cancer_populationhealth_metadata"
 query_local_metadata = "./docs/pop_local_metadata.sql"
