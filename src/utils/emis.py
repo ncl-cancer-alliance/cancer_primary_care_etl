@@ -76,9 +76,10 @@ def derive_date(data_file, keyword_row="Last Run", keyword_col="Relative Date"):
                         
                         #Update the date data start and end variables
                         date_data_start = datetime(
-                            rel_date.year + int(rel_date.month / 12), #Year
-                            ((rel_date.month % 12) - 1), #Month
-                            1).date() #Day
+                            rel_date.year - 1 if rel_date.month == 1 
+                                else rel_date.year,
+                            12 if rel_date.month == 1 else rel_date.month - 1,
+                            1).date()
                         date_data_end = rel_date
 
                         return True
