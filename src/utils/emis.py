@@ -28,8 +28,16 @@ date_data_end = None
 def extract_files(emis_dir):
     tmp_dir = net.manage_temp(mode="+")
 
+    #Locate zip file in directory
+    zip_files = [x for x in os.listdir(emis_dir) if x.endswith(".zip")]
+
+    if len(zip_files) > 1:
+        raise Exception(f"Multiple zip files found in {emis_dir}")
+    
     net.unzip_file(
-        "Cancer,FIT,social prescribing & electronic safety netting audit.zip",
+        #Remove hard coded name, it varies between months
+        #Also check if there are multiple zips and archive old ones
+        zip_files[0],
         source_dir=emis_dir,
         dest_dir=tmp_dir)
     
@@ -76,9 +84,10 @@ def derive_date(data_file, keyword_row="Last Run", keyword_col="Relative Date"):
                         
                         #Update the date data start and end variables
                         date_data_start = datetime(
-                            rel_date.year + int(rel_date.month / 12), #Year
-                            ((rel_date.month % 12) - 1), #Month
-                            1).date() #Day
+                            rel_date.year - 1 if rel_date.month == 1 
+                                else rel_date.year,
+                            12 if rel_date.month == 1 else rel_date.month - 1,
+                            1).date()
                         date_data_end = rel_date
 
                         return True
@@ -147,7 +156,12 @@ def processing_ccr(df, parameters):
     #Convert date into "MMM yy"
     date_string = date_data_start.strftime("%b %y")
 
+    #Format indicator value
     df["Indicator"] = parameters + " - " + date_string
+
+    #Convert percentage to float
+    df["Percentage"] = df["Percentage"].str[:-1].astype(float)
+    df["Percentage"] = df["Percentage"] / 100
 
     return df
 
@@ -166,6 +180,10 @@ def processing_fit(df, parameters):
 def processing_spr(df, parameters):
     #Add Indicator Name to data
     df["Indicator_Name"] = parameters
+
+    #Convert date to string to avoid unusual formatting when SQL converts
+    df["Start_Date"] = pd.to_datetime(df["Start_Date"])
+    df["Start_Date"] = df["Start_Date"].dt.strftime('%Y-%m-%d')
 
     #Rename columns to match the Pop Health table schematics
     rename_map = {
@@ -278,7 +296,9 @@ def process_emis_datafile(settings, data_file, ds,
 
     #Upload the new data (Replace this in the future with more modular solution)
     engine = db.db_connect(settings["db_dsn"], settings["db_database"])
-    upload_data(engine, df, 
+
+    if settings["upload"]:
+        upload_data(engine, df, 
                 settings["ds"][ds]["db_dest_table"], settings["db_dest_schema"],
                 id_cols=settings["ds"][ds]["id_cols"])
 
