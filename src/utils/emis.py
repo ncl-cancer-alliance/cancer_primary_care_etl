@@ -28,8 +28,16 @@ date_data_end = None
 def extract_files(emis_dir):
     tmp_dir = net.manage_temp(mode="+")
 
+    #Locate zip file in directory
+    zip_files = [x for x in os.listdir(emis_dir) if x.endswith(".zip")]
+
+    if len(zip_files) > 1:
+        raise Exception(f"Multiple zip files found in {emis_dir}")
+    
     net.unzip_file(
-        "Cancer,FIT,social prescribing & electronic safety netting audit.zip",
+        #Remove hard coded name, it varies between months
+        #Also check if there are multiple zips and archive old ones
+        zip_files[0],
         source_dir=emis_dir,
         dest_dir=tmp_dir)
     
