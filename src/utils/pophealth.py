@@ -191,10 +191,11 @@ def indicator_manager(settings):
         df_prac = et_practice(settings, target_indicators)
 
         #Upload the output
-        upload_pop_data(
-            settings, df_prac, 
-            dest_table=settings["pop"]["db_dest_table_practice"],
-            indicators=target_indicators)
+        if settings["upload"]:
+            upload_pop_data(
+                settings, df_prac, 
+                dest_table=settings["pop"]["db_dest_table_practice"],
+                indicators=target_indicators)
         print("-> Data processed.")
     else:
         print("-> No new data found.")

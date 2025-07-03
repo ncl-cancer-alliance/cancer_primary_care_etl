@@ -289,7 +289,8 @@ def process_emis_datafile(settings, data_file, ds,
     #Upload the new data (Replace this in the future with more modular solution)
     engine = db.db_connect(settings["db_dsn"], settings["db_database"])
 
-    upload_data(engine, df, 
+    if settings["upload"]:
+        upload_data(engine, df, 
                 settings["ds"][ds]["db_dest_table"], settings["db_dest_schema"],
                 id_cols=settings["ds"][ds]["id_cols"])
 

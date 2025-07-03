@@ -38,6 +38,8 @@ def build_settings():
         "db_database": config["base"]["db_database"],
         "db_dest_schema": config["base"]["db_schema"],
 
+        "upload": (getenv(f"RUN_UPLOAD") != "False"),
+
         "emis":{
             "run": (getenv(f"RUN_EMIS") != "False"),
             "zip": (getenv(f"EMIS_ZIPFILE") != "False"),
