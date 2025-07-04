@@ -38,17 +38,17 @@ This project requires the following files to be saved in corresponding locations
 
 If EMIS_ZIPFILE is set to "True" in the .env file:
 - EMIS zip file: Zip file containing EMIS data
-  - Saved in .data/emis/
+  - Saved in ./data/emis/
 
 If EMIS_ZIPFILE is set to "False" in the .env file:
 - CCR directory containing the CCR data files
-  - Saved in .data/Cancer/
+  - Saved in ./data/Cancer/
 - eSafety Netting directory containing the CCR data files
-  - Saved in .data/safety netting/
+  - Saved in ./data/safety netting/
 - FIT directory containing the FIT data files
-  - Saved in .data/FIT/
+  - Saved in ./data/FIT/
 - Social Prescribing Referral directory containing the SPR data files
-  - Saved in .data/Social prescribing referral/
+  - Saved in ./data/Social prescribing referral/
 
 ## Usage
 - Complete the set up as described in the previous section.
