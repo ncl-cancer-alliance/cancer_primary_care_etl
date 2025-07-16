@@ -19,7 +19,7 @@ db_schema = "GrahamR"
 
 [emis]
 data_dir = "emis/"
-pipelines = ["CCR", "eSafety", "FIT", "SPR"]
+pipelines = ["CCR", "eSafety", "FIT", "FIT Quarterly", "SPR"]
 
 [emis.ccr]
 name = "Cancer Care Reviews"
@@ -41,7 +41,8 @@ esafety_indicator_name = "USC referrals safety netted via e-safety netting tool"
 name = "FIT"
 subdir_substrings = ["FIT"]
 db_dest_table = "Monthly_FIT_NCL"
-data_id_cols = ["Start_Date", "Date_Type"]
+data_id_cols = ["End_Date", "Date_Type"]
+name_q = "FIT Quarterly"
 
 [emis.spr]
 name = "Social Prescribing Referrals"

@@ -55,7 +55,16 @@ def find_data_subdir(parent_dir, substrings, name, exact=False, case=False):
             matching_dirs.append(subdir)
 
     if len(matching_dirs) == 1:
-        return matching_dirs[0]
+
+        dir_ds = matching_dirs[0]
+
+        if "Quarter" in name:
+            dir_qtr = next(os.walk(parent_dir + dir_ds + "/"))[1]
+
+            if len(dir_qtr) == 1:
+                return dir_ds + "/" + dir_qtr[0]
+
+        return dir_ds
     elif len(matching_dirs) == 0:
         print(f"Warning: No {name} directories found in {parent_dir}")
     else:
@@ -80,7 +89,7 @@ def derive_date(data_file, keyword_row="Last Run", keyword_col="Relative Date"):
                     if col and col.strip().lower() == keyword_col.lower():
                         #Convert the Relative Date in the file into a date var
                         rel_date = datetime.strptime(
-                            row[idx+1], '%d-%b-%Y').date()
+                            row[idx+1], '%d-%b-%y').date()
                         
                         #Update the date data start and end variables
                         date_data_start = datetime(
@@ -138,7 +147,7 @@ def upload_data(engine, data, table, schema, id_cols=["Start_Date"]):
 
     query = query_base + line 
 
-    db.execute_query(engine, query)
+    #db.execute_query(engine, query)
   
     #Basic upload code
     data.to_sql(name=table, con=engine, schema=schema,
@@ -169,7 +178,7 @@ def processing_ccr(df, parameters):
 def processing_fit(df, parameters):
 
     #Set Date Type
-    df["Date_Type"] = "Monthly"
+    df["Date_Type"] = parameters["Date_Type"]
 
     #Convert the FIT % into a float
     df["Percentage"] = df["Percentage"].str[:-1].astype(float)/100
@@ -200,6 +209,9 @@ def processing_spr(df, parameters):
 
     df.drop(labels=unused_cols, axis=1, inplace=True)
 
+    #Add data source as Fingertips
+    df["Data_source"] = "EMIS"
+
     return df
 
 ####################################
@@ -223,7 +235,7 @@ def file_id_esafety(settings, ds, data_files):
     return [x for x in data_files if "esafety" in x]
 
 def file_id_fit(settings, ds, data_files):
-    return [x for x in data_files if "before Ref" in x]
+    return [x for x in data_files if "before ref" in x.lower()]
 
 def file_id_spr(settings, ds, data_files):
     return [x for x in data_files if "Social" in x]
@@ -242,6 +254,17 @@ def custom_parameters_ccr(settings, ds, data_file):
 
 def custom_parameters_esafety(settings, ds, data_file):
     return settings["ds"][ds]["esafety_indicator_name"]
+
+def custom_parameters_fit(settings, ds, data_file):
+
+    if ds == "FIT Quarterly":
+        data_type = "Quarterly"
+    elif ds == "FIT":
+        data_type = "Monthly"
+
+    return {
+        "Date_Type": data_type
+    }
 
 def custom_parameters_spr(settings, ds, data_file):
     return settings["ds"]["SPR"]["indicator_name"]
