@@ -52,7 +52,7 @@ If EMIS_ZIPFILE is set to "False" in the .env file:
 
 ## Usage
 - Complete the set up as described in the previous section.
-- Enable the virtual environment if not already active (see [Scripting Onboarding](https://nhs.sharepoint.com/:f:/r/sites/msteams_3c6e53/Shared%20Documents/Data%20Science?csf=1&web=1&e=ArWnMM) documentation for details).
+- Enable the virtual environment if not already active (see [Scripting Onboarding](https://nhs.sharepoint.com/:w:/r/sites/msteams_38dd8f/Shared%20Documents/Document%20Library/Documents/Git%20Integration/Internal%20Scripting%20Guide.docx?d=wc124f806fcd8401b8d8e051ce9daab87&csf=1&web=1&e=OQjbRm) documentation for details).
 - Adjust the settings in the .env to toggle which files and data is processed
 - Run the main script ./src/main.py
 
