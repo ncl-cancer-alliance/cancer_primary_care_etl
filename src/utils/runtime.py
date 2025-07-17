@@ -103,7 +103,19 @@ def build_settings():
                 "func":{
                    "file_id": file_id_fit,
                    "custom_processing": processing_fit,
-                   "custom_parameters": False},
+                   "custom_parameters": custom_parameters_fit},
+            },
+            "FIT Quarterly":{
+                #Common variables
+                "name": config["emis"]["fit"]["name_q"],
+                "subdir_substrings":config["emis"]["fit"]["subdir_substrings"],
+                "db_dest_table": config["emis"]["fit"]["db_dest_table"],
+                "id_cols": config["emis"]["fit"]["data_id_cols"],
+                #Functions
+                "func":{
+                   "file_id": file_id_fit,
+                   "custom_processing": processing_fit,
+                   "custom_parameters": custom_parameters_fit},
             },
             "SPR":{
                 #Common variables
