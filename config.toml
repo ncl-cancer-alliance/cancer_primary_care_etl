@@ -59,3 +59,6 @@ db_dest_table_practice = "Monthly_Population_Health"
 db_dest_table_benchmark = "cancer_populationhealth_benchmark"
 db_dest_table_metadata = "cancer_populationhealth_metadata"
 query_local_metadata = "./docs/pop_local_metadata.sql"
+
+[screening]
+db_dest_table = "Futures_Screening_NCL_nationaltest"
