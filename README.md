@@ -25,6 +25,12 @@ This includes:
 - Added documentation for the code
 - Added a sample.env file to help people build the .env for themselves
 
+#### [1.1.0] - 2025-07-16
+- Added ability to process quarterly fit data
+
+#### [1.2.0] - 2025-07-18
+- Added Screening pipeline
+
 ## Set up
 Please refer to the NCL ICB Analytics Team Scripting Onboarding documentation for instructions on setting up coding projects including virtual environments (venv).
 
@@ -38,21 +44,23 @@ This project requires the following files to be saved in corresponding locations
 
 If EMIS_ZIPFILE is set to "True" in the .env file:
 - EMIS zip file: Zip file containing EMIS data
-  - Saved in .data/emis/
+  - Saved in ./data/emis/
 
 If EMIS_ZIPFILE is set to "False" in the .env file:
 - CCR directory containing the CCR data files
-  - Saved in .data/Cancer/
+  - Saved in ./data/Cancer/
 - eSafety Netting directory containing the CCR data files
-  - Saved in .data/safety netting/
+  - Saved in ./data/safety netting/
 - FIT directory containing the FIT data files
-  - Saved in .data/FIT/
+  - Saved in ./data/FIT/
 - Social Prescribing Referral directory containing the SPR data files
-  - Saved in .data/Social prescribing referral/
+  - Saved in ./data/Social prescribing referral/
+
+To use Screening data, the csvs from the Futures Screening dashboard should be added to the data/screening/ folder in either the local (for NCL practice level data) or national (for regional benchmarking data)
 
 ## Usage
 - Complete the set up as described in the previous section.
-- Enable the virtual environment if not already active (see [Scripting Onboarding](https://nhs.sharepoint.com/:f:/r/sites/msteams_3c6e53/Shared%20Documents/Data%20Science?csf=1&web=1&e=ArWnMM) documentation for details).
+- Enable the virtual environment if not already active (see [Scripting Onboarding](https://nhs.sharepoint.com/:w:/r/sites/msteams_38dd8f/Shared%20Documents/Document%20Library/Documents/Git%20Integration/Internal%20Scripting%20Guide.docx?d=wc124f806fcd8401b8d8e051ce9daab87&csf=1&web=1&e=OQjbRm) documentation for details).
 - Adjust the settings in the .env to toggle which files and data is processed
 - Run the main script ./src/main.py
 

@@ -14,8 +14,8 @@ except:
     import database_util as db
     import network_util as net
 
-#Get indicator metadata
-def get_indicator_metadata(indicator_ids):
+#Get indicator metadata from the online API
+def get_online_indicator_metadata(indicator_ids):
     #Convert to array if singular id given
     if type(indicator_ids) == int or type(indicator_ids) == str:
         indicator_ids = [indicator_ids]
@@ -159,6 +159,7 @@ def et_practice(settings, indicators):
     #Extract the data
     df_prac = get_data_for_indicators(indicators, area_type_id=7, 
                                       parent_area_type_id=66)
+
     #Transform the data
     #Filter to NCL Practices
     df_prac = (
@@ -178,7 +179,7 @@ def indicator_manager(settings):
     indicators = settings["pop"]["indicators"]
 
     #Get metadata on these indicators
-    metadata = get_indicator_metadata(indicators)
+    metadata = get_online_indicator_metadata(indicators)
 
     #Determine which indicators has new data
     target_indicators = get_new_data_indicators(settings, indicators, metadata)
@@ -190,6 +191,23 @@ def indicator_manager(settings):
         print("-> Fetching the Practice Level data (this may take a minute)")
         df_prac = et_practice(settings, target_indicators)
 
+        #Add data source as Fingertips
+        df_prac["Data_source"] = "Fingertips"
+
+        #Use the online metadata to stamp the latest date for each indicator
+        df_metadata_dates = metadata[["Indicator ID", "Date updated"]]
+        df_metadata_dates = df_metadata_dates.rename(
+            columns={"Indicator ID":"Indicator_ID", 
+                     "Date updated":"Date_updated"})
+
+        df_prac = df_prac.merge(
+            df_metadata_dates, on="Indicator_ID", 
+            suffixes=("_online", "_local"),
+            how="left")
+        
+        df_prac["Date_updated"] = pd.to_datetime(
+            df_prac["Date_updated"], format="%d/%m/%Y")
+        
         #Upload the output
         if settings["upload"]:
             upload_pop_data(
