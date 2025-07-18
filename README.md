@@ -25,6 +25,12 @@ This includes:
 - Added documentation for the code
 - Added a sample.env file to help people build the .env for themselves
 
+#### [1.1.0] - 2025-07-16
+- Added ability to process quarterly fit data
+
+#### [1.2.0] - 2025-07-18
+- Added Screening pipeline
+
 ## Set up
 Please refer to the NCL ICB Analytics Team Scripting Onboarding documentation for instructions on setting up coding projects including virtual environments (venv).
 
@@ -49,6 +55,8 @@ If EMIS_ZIPFILE is set to "False" in the .env file:
   - Saved in ./data/FIT/
 - Social Prescribing Referral directory containing the SPR data files
   - Saved in ./data/Social prescribing referral/
+
+To use Screening data, the csvs from the Futures Screening dashboard should be added to the data/screening/ folder in either the local (for NCL practice level data) or national (for regional benchmarking data)
 
 ## Usage
 - Complete the set up as described in the previous section.
