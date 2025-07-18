@@ -60,6 +60,10 @@ def build_settings():
             "detailed_logging": (getenv(f"POP_DETAILED_LOGGING") != "False"),
             "force_update": (getenv(f"POP_FORCE") != "False")
         },
+        "screening":{
+            "run": (getenv(f"RUN_SCREENING") != "False"),
+            "db_dest_table": config["screening"]["db_dest_table"]
+        },
         "ds":{
             "CCR":{
                 #Common variables
